@@ -1,38 +1,35 @@
 # Flight Delay Propagation Analyzer
 
-A time-ordered arrival-delay regressor with route/calendar predictors, leakage exclusions, and holdout error in minutes.
+A reproducible scheduled-time arrival-delay regression baseline on official BTS domestic flight records. The benchmark compares a regularized model with a simple training-median baseline and preserves a chronological month holdout.
 
-> **Portfolio prototype.** Code is provided; no benchmark results are claimed until you run it on the cited data and record the output.
-
-## Use case
-
-A time-ordered arrival-delay regressor with route/calendar predictors, leakage exclusions, and holdout error in minutes. The command below reads a local data export, applies a transparent baseline, writes holdout or decision-support outputs, and saves the fitted model where applicable.
-
-## Data and provenance
-
-[U.S. DOT BTS Reporting Carrier On-Time Performance](https://www.transtats.bts.gov/ONTIME/Index.aspx). A BTS on-time CSV with `FL_DATE` and `ARR_DELAY`. Use a route/month slice to fit on a workstation; the model excludes direct post-arrival measurements. Dataset files are not bundled. Respect the source terms and cite the dataset when publishing results.
-
-## Quick start
+## Data and run
 
 ```bash
 python -m venv .venv
 # Windows: .venv\\Scripts\\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-# Download/prepare the source data locally, then run:
-python main.py --input data/On_Time.csv --date FL_DATE --target ARR_DELAY --out outputs
+python fetch_data.py
+python benchmark.py
 ```
 
-## Outputs
+The fetcher downloads BTS monthly files for January–March 2023 and keeps a seeded sample of up to 100,000 completed flights per month. Training uses January–February; March is untouched test data. Source archives and row-level data stay local and are ignored by Git.
 
-The `outputs/` directory contains the model-specific results (metrics and/or ranked CSV) and a serialized estimator where applicable. Outputs are reproducible with the same input, package versions, and random seed. The repository intentionally excludes downloaded data and generated artifacts.
+## Result
 
-## Evaluation and operating notes
+The test sample contains 200,000 train and 100,000 March test flights. Ridge regression achieved **23.49 minutes MAE**, slightly worse than the training-median baseline (**22.50 minutes**); the model therefore does not improve this baseline on the March sample. Alpha was selected using February validation only, and still underperformed the validation median. Full fingerprints and results are in `reports/benchmark.json`.
 
-Delay is influenced by weather, network effects, and airline operations. This baseline is not a real-time predictor unless those sources are joined with correct event-time semantics.
+The negative result is useful: route and schedule features alone were insufficient here. The model excludes airport weather, network state, and operational updates that would be needed for a stronger decision-time forecast.
 
-For a production review, preserve a time-based, untouched holdout; compare against a simple business baseline; inspect calibration and subgroup error; document data lineage; and monitor drift. The included baseline is not a production service.
+## Scope and leakage controls
 
-## License
+Target is arrival delay in minutes, clipped to [-60, 240]. Predictors are carrier, origin/destination, calendar, scheduled departure/arrival time, scheduled elapsed time, and distance. Actual departure/arrival times, departure delay, taxi and wheels-off/on measures, delay attribution fields, tail number, and flight number are excluded.
 
-No code license file is included yet. Third-party datasets remain subject to their original terms.
+Cancelled and diverted flights are not modeled. This three-month offline baseline is not a live operations forecast and does not establish performance across seasons or years.
+
+## Source
+
+U.S. Department of Transportation, Bureau of Transportation Statistics, [Reporting Carrier On-Time Performance (1987-present)](https://transtats.bts.gov/ONTIME/Index.aspx). Monthly files are available from the [BTS PREZIP directory](https://transtats.bts.gov/PREZIP/). Data are not redistributed in this repository.
+
+No code license file is included yet. Third-party data remain subject to source terms.
+
