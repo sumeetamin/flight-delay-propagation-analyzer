@@ -1,0 +1,89 @@
+{
+  "dataset": "U.S. DOT BTS Reporting Carrier On-Time Performance, 2023 monthly files",
+  "target": "Arrival delay minutes (ArrDelay), clipped to [-60, 240] for this baseline",
+  "sample": {
+    "train_months": [
+      "2023-01",
+      "2023-02"
+    ],
+    "test_month": "2023-03",
+    "train_rows": 200000,
+    "test_rows": 100000,
+    "train_flight_dates": [
+      "2023-01-01",
+      "2023-02-28"
+    ],
+    "test_flight_dates": [
+      "2023-03-01",
+      "2023-03-31"
+    ]
+  },
+  "method": "Ridge regression; one-hot route/carrier/calendar variables and scaled scheduled duration/distance",
+  "features": [
+    "Reporting_Airline",
+    "Origin",
+    "Dest",
+    "Month",
+    "DayOfWeek",
+    "DepHour",
+    "ArrHour",
+    "CRSElapsedTime",
+    "Distance"
+  ],
+  "excluded_post_schedule_or_outcome_fields": [
+    "DepDelay",
+    "DepDelayMinutes",
+    "DepDel15",
+    "DepTime",
+    "ArrTime",
+    "ArrDelayMinutes",
+    "ArrDel15",
+    "TaxiOut",
+    "TaxiIn",
+    "WheelsOff",
+    "WheelsOn",
+    "CarrierDelay",
+    "WeatherDelay",
+    "NASDelay",
+    "SecurityDelay",
+    "LateAircraftDelay",
+    "Tail_Number",
+    "flight number"
+  ],
+  "test_metrics": {
+    "train_median_baseline_mae_minutes": 22.50012,
+    "model_mae_minutes": 23.494138673205857,
+    "model_rmse_minutes": 39.409927216407965,
+    "delta_mae_vs_train_median_minutes": 0.9940186732058578
+  },
+  "source_csv_sha256": "cf6dc1173be8695d38a44babe869fc9d3531cf4d2c85a64084e3e14c69ad0f4d",
+  "limitations": [
+    "This is an offline scheduled-time baseline, not a real-time operational forecast.",
+    "Only three months from 2023 are sampled; performance may change across seasons and years.",
+    "The training sample is capped at 100,000 random flights per month.",
+    "Cancelled and diverted flights are excluded, so this does not predict cancellation or diversion.",
+    "Delay distribution is heavy-tailed; clipping means reported errors apply to the clipped target."
+  ],
+  "validation": {
+    "training_sample": "January 2023 (100,000 flights)",
+    "validation_sample": "February 2023 (100,000 flights)",
+    "ridge_alphas_tested": [
+      0.1,
+      1,
+      10,
+      20,
+      100,
+      500
+    ],
+    "selected_alpha": 500,
+    "selected_model_mae_minutes": 23.908371669277212,
+    "training_median_baseline_mae_minutes": 20.42242,
+    "selection_result": "Selected model still underperformed the validation median baseline."
+  },
+  "source_archives_sha256": {
+    "2023_01": "327924faa362d360747e9e4cf37f461c877441916321754f1789fadd61fd403a",
+    "2023_02": "bfa6eb7beb53bf10603110aa11bdebf00a89f51d870b331f6565181bb943ddbf",
+    "2023_03": "1a61dce7c50e5c4f074ebff69a833840f4c6be4e71d4a4707be540ace9e6d58b"
+  }
+}
+
